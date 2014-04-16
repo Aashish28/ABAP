@@ -1,0 +1,18 @@
+*&---------------------------------------------------------------------*
+*& Report  YGUI_WEBCAM
+*& Tcode   YWEBCAM
+*&---------------------------------------------------------------------*
+*& Developer : Ashish Ahire
+*& Date      : 15.04.2014
+*&---------------------------------------------------------------------*
+
+REPORT  YGUI_WEBCAM.
+
+
+INCLUDE YGUI_WEBCAM_TOP.
+INCLUDE YGUI_WEBCAM_PBO01.
+INCLUDE YGUI_WEBCAM_PAI01.
+
+START-OF-SELECTION.
+
+call screen 9000.
