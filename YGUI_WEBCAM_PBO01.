@@ -1,0 +1,46 @@
+*----------------------------------------------------------------------*
+***INCLUDE YGUI_WEBCAM_PBO01 .
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_9000  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_9000 OUTPUT.
+
+  SET PF-STATUS 'YGUI_WEBCAM'.
+  SET TITLEBAR 'YTTL_WEBCAM'.
+
+  IF my_container IS INITIAL.
+    CREATE OBJECT my_container
+      EXPORTING
+        container_name = 'WEBCAM_CC'
+      EXCEPTIONS
+        others         = 1.
+    CASE sy-subrc.
+      WHEN 0.
+      WHEN OTHERS.
+        RAISE cntl_error.
+    ENDCASE.
+
+    CREATE OBJECT WEBCAM_OBJ
+      exporting
+        PARENT             = my_container    " Abstract Container for GUI Controls
+*    exceptions
+*      CNTL_ERROR         = 1
+*      CNTL_INSTALL_ERROR = 2
+*      OTHERS             = 3
+      .
+    if sy-subrc <> 0.
+*   message id sy-msgid type sy-msgty number sy-msgno
+*              with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+
+    else.
+
+     WEBCAM_OBJ->SET_WEBCAM_PROPERTY( ).
+
+    endif.
+
+  ENDIF .
+
+ENDMODULE.                 " STATUS_9000  OUTPUT
