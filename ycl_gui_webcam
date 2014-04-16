@@ -1,0 +1,161 @@
+class YCL_GUI_WEBCAM definition
+  public
+  inheriting from CL_GUI_CONTROL
+  final
+  create public .
+
+public section.
+*"* public components of class YCL_GUI_WEBCAM
+*"* do not include other source files here!!!
+  type-pools CNTL .
+
+  methods CONSTRUCTOR
+    importing
+      !PARENT type ref to CL_GUI_CONTAINER
+    exceptions
+      CNTL_ERROR
+      CNTL_INSTALL_ERROR .
+  methods SET_WEBCAM_PROPERTY
+    exceptions
+      CNTL_ERROR .
+  methods START_WEBCAM .
+  methods CAPTURE_SNAPSHOT .
+protected section.
+*"* protected components of class YCL_GUI_WEBCAM
+*"* do not include other source files here!!!
+private section.
+*"* private components of class YCL_GUI_WEBCAM
+*"* do not include other source files here!!!
+ENDCLASS.
+
+
+
+CLASS YCL_GUI_WEBCAM IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method YCL_GUI_WEBCAM->CAPTURE_SNAPSHOT
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method CAPTURE_SNAPSHOT.
+*Developer - Ashish Ahire
+
+  CALL METHOD me->CALL_METHOD
+  exporting
+    P1                =  'E:\photo.jpg'   " Parameters
+    P2                =  90   " Parameters
+    METHOD            = 'SnapShotJPEG'     " Name
+    P_COUNT           = 2    " Number of Valid Parameters
+*        QUEUE_ONLY        = 'X'    " Queue_Only Use of RESULT
+*        KEEP_CACHE        =     " Is it Allowed to Continue Using the Cache Contents?
+*      importing
+*        RESULT            =     " Result of Call
+*      exceptions
+*        CNTL_ERROR        = 1
+*        CNTL_SYSTEM_ERROR = 2
+*        OTHERS            = 3
+  .
+  if sy-subrc <> 0.
+*     message id sy-msgid type sy-msgty number sy-msgno
+*                with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  endif.
+
+
+
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method YCL_GUI_WEBCAM->CONSTRUCTOR
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] PARENT                         TYPE REF TO CL_GUI_CONTAINER
+* | [EXC!] CNTL_ERROR
+* | [EXC!] CNTL_INSTALL_ERROR
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method CONSTRUCTOR.
+*Developer - Ashish Ahire
+
+    DATA: ctrl_name(80) TYPE c,
+          wf_clsid(100) TYPE c .
+
+    CALL METHOD cl_gui_cfw=>flush.
+
+    IF NOT cl_gui_object=>activex IS INITIAL .
+      wf_clsid = '{AA408ECC-E50B-401F-8036-021E81B9E5A1}'.
+    ELSE .
+      RAISE cntl_error .
+    ENDIF .
+
+
+    CALL METHOD super->CONSTRUCTOR
+      exporting
+    clsid = wf_clsid
+    shellstyle = cl_gui_control=>ws_visible      +        " 268435456
+                   cl_gui_control=>ws_child        +        "1073741824
+                   cl_gui_control=>ws_clipchildren +        "33554432
+                   cl_gui_control=>ws_clipsiblings"shellstyle
+    lifetime = lifetime
+*    name = name
+    parent = parent
+    EXCEPTIONS
+    cntl_system_error = 1
+    OTHERS = 2 .
+
+    CASE sy-subrc .
+      WHEN 1 .
+        RAISE cntl_install_error .
+      WHEN 2 .
+        RAISE cntl_error .
+    ENDCASE .
+
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method YCL_GUI_WEBCAM->SET_WEBCAM_PROPERTY
+* +-------------------------------------------------------------------------------------------------+
+* | [EXC!] CNTL_ERROR
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method SET_WEBCAM_PROPERTY.
+*Developer - Ashish Ahire
+
+  CALL METHOD cl_gui_cfw=>subscribe
+    EXPORTING
+      ref     = me
+      shellid = me->h_control-shellid
+    EXCEPTIONS
+      OTHERS  = 1.
+
+
+  IF sy-subrc NE 0 .
+    RAISE cntl_error .
+  ENDIF .
+
+  CALL METHOD me->set_property
+    EXPORTING
+      property = 'LicenseKey'                               "#EC NOTEXT
+      value    = 'Demo'.
+
+
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method YCL_GUI_WEBCAM->START_WEBCAM
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method START_WEBCAM.
+*Developer - Ashish Ahire
+
+  CALL METHOD me->set_property
+    EXPORTING
+      property = 'ShowPreview'                              "#EC NOTEXT
+      value    = 1.
+
+
+  CALL METHOD me->call_method
+    EXPORTING
+      method = 'Start'.
+
+endmethod.
+ENDCLASS.
