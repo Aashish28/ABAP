@@ -1,0 +1,22 @@
+*----------------------------------------------------------------------*
+***INCLUDE YGUI_WEBCAM_PAI01 .
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_9000  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_9000 INPUT.
+
+CASE sy-ucomm.
+  WHEN 'EXIT'.
+    set SCREEN 0.
+    LEAVE TO CURRENT TRANSACTION.
+  WHEN 'START'.
+    WEBCAM_OBJ->START_WEBCAM( ).
+  WHEN 'CAPTURE'.
+    WEBCAM_OBJ->CAPTURE_SNAPSHOT( ).
+  WHEN OTHERS.
+ENDCASE.
+
+ENDMODULE.                 " USER_COMMAND_9000  INPUT
