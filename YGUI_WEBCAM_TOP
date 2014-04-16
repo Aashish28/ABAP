@@ -1,0 +1,6 @@
+*&---------------------------------------------------------------------*
+*&  Include           YGUI_WEBCAM_TOP
+*&---------------------------------------------------------------------*
+
+DATA: webcam_obj TYPE REF TO YCL_GUI_WEBCAM,
+      my_container TYPE REF TO cl_gui_custom_container.
