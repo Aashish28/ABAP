@@ -1,0 +1,211 @@
+*&---------------------------------------------------------------------*
+*& Report  ZRFC
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+REPORT ZRFC.
+
+"PDREVERSEPROXY
+
+DATA: lo_http_client     TYPE REF TO if_http_client,
+         lo_rest_client     TYPE REF TO cl_rest_http_client,
+         lv_url             TYPE        string,
+         lv_body            TYPE        string,
+         token              TYPE        string,
+         agreements         TYPE        string,
+         "Create a structure(or deep) that exactly matches your JSON response
+"         abap_response      TYPE        zca_serno_ln,
+         lo_response    TYPE REF TO     if_rest_entity.
+* Create HTTP intance using RFC restination created
+* You can directly use the REST service URL as well
+   cl_http_client=>create_by_destination(
+    EXPORTING
+      destination              = 'PDREVERSEPROXY'    " Logical destination (specified in function call)
+    IMPORTING
+      client                   = lo_http_client    " HTTP Client Abstraction
+    EXCEPTIONS
+      argument_not_found       = 1
+      destination_not_found    = 2
+      destination_no_authority = 3
+      plugin_not_active        = 4
+      internal_error           = 5
+      OTHERS                   = 6
+  ).
+* If you are using cl_http_client=>create_by_url use this code to supress and pass your
+* HTTP basic authenication
+*  lo_http_client->propertytype_logon_popup = lo_http_client->co_disabled.
+*  DATA l_username TYPE string.
+*  DATA l_password TYPE string.
+*  l_username = 'user'.
+*  l_password = 'password'.
+*  CALL METHOD lo_http_client->authenticate
+*    EXPORTING
+*      username = l_username
+*      password = l_password.
+* Create REST client instance
+   CREATE OBJECT lo_rest_client
+     EXPORTING
+       io_http_client = lo_http_client.
+
+* set http method POST
+*    call method lo_http_client->request->set_method(
+*      if_http_request=>co_request_method_get ).
+
+* Set HTTP version
+   lo_http_client->request->set_version( if_http_request=>co_protocol_version_1_0 ).
+
+   IF lo_http_client IS BOUND AND lo_rest_client IS BOUND.
+     DATA(id) = ''.
+     CONCATENATE '/logon/long' id INTO lv_url.
+
+* Set the URI if any
+     cl_http_utility=>set_request_uri(
+       EXPORTING
+         request = lo_http_client->request    " HTTP Framework (iHTTP) HTTP Request
+         uri     = lv_url                     " URI String (in the Form of /path?query-string)
+     ).
+* HTTP GET
+     "lo_rest_client->if_rest_resource~post( lo_request ).
+     lo_rest_client->if_rest_client~get( ).
+
+* HTTP response
+     lo_response = lo_rest_client->if_rest_client~get_response_entity( ).
+     data(lv_str) = lo_response->get_string_data( ).
+
+* HTTP return status
+     DATA(http_status)   = lo_response->get_header_field( '~status_code' ).
+
+     "WRITE lv_str.
+
+
+
+
+    DATA: lo_json        TYPE REF TO cl_clb_parse_json,
+           "lo_response    TYPE REF TO if_rest_entity,
+           lo_request     TYPE REF TO if_rest_entity,
+           lo_sql         TYPE REF TO cx_sy_open_sql_db,
+           status         TYPE  string,
+           reason         TYPE  string,
+           response       TYPE  string,
+           content_length TYPE  string,
+           logontoken      TYPE  string,
+           content_type   TYPE  string,
+           lv_status      TYPE  i.
+
+     data lv_mo TYPE string.
+
+     data(lv_1) = '<attrs xmlns="http://www.sap.com/rws/bip">'.
+     data(lv_2) = '<attr name="password" type="string">Welcome@123</attr>'.
+     data(lv_3) = '<attr name="clientType" type="string" />'.
+     data(lv_4) = '<attr name="auth" type="string" possibilities="secEnterprise,secLDAP,secWinAD,secSAPR3">secEnterprise</attr>'.
+     data(lv_5) = '<attr name="userName" type="string">z003xt3u</attr></attrs>'.
+
+     CONCATENATE lv_1 lv_2 lv_3 lv_4 lv_5 INTO lv_mo.
+
+      lo_request = lo_rest_client->if_rest_client~create_request_entity( ).
+     lo_request->set_content_type( iv_media_type = if_rest_media_type=>gc_appl_xml ).
+     lo_request->set_string_data( lv_mo ).
+     lo_rest_client->if_rest_resource~post( lo_request ).
+
+
+      lo_response = lo_rest_client->if_rest_client~get_response_entity( ).
+     http_status = lv_status = lo_response->get_header_field( '~status_code' ).
+     reason = lo_response->get_header_field( '~status_reason' ).
+     content_length = lo_response->get_header_field( 'content-length' ).
+     logontoken = lo_response->get_header_field( 'logonToken' ).
+     content_type = lo_response->get_header_field( 'content-type' ).
+     response = lo_response->get_string_data( ).
+
+     data(lv_token) = response+301(250).
+
+     "WRITE lv_token  .
+
+
+     DATA: xml_doc TYPE REF TO cl_xml_document.
+DATA node TYPE REF TO if_ixml_node.
+DATA value TYPE string.
+DATA name TYPE string.
+data counter type i.
+
+CREATE OBJECT xml_doc.
+xml_doc->parse_string( stream = response ).
+
+node = xml_doc->find_node( name = 'attr' ).
+
+*DO.
+*
+*CALL METHOD xml_doc->get_node_attr
+*EXPORTING
+*node = node
+*index = counter
+*IMPORTING
+*name = name
+*value = value.
+*
+*IF name is initial.
+*exit.
+*ENDIF.
+
+data lv TYPE string.
+
+CALL METHOD xml_doc->get_node_data
+  EXPORTING
+    node       = node    " Nodes
+  IMPORTING
+    dataobject =  lv   " Data Object
+*    retcode    =     " Return Code
+  .
+WRITE lv.
+
+*WRITE: / name, value, lv.
+*
+*counter = counter + 1.
+*ENDDO.
+
+
+      lo_http_client->refresh_request( ).
+
+* Set HTTP version
+   lo_http_client->request->set_version( if_http_request=>co_protocol_version_1_0 ).
+
+lv_url = '/infostore/633859/children'.
+
+
+     cl_http_utility=>set_request_uri(
+       EXPORTING
+         request = lo_http_client->request    " HTTP Framework (iHTTP) HTTP Request
+         uri     = lv_url                     " URI String (in the Form of /path?query-string)
+     ).
+
+
+CALL METHOD lo_rest_client->if_rest_client~set_request_header
+       EXPORTING
+         iv_name  = 'X-SAP-LogonToken'
+         iv_value = lv. "Set your header
+
+CALL METHOD lo_rest_client->if_rest_client~set_request_header
+       EXPORTING
+         iv_name  = 'Content-Type'
+         iv_value = 'application/json'. "Set your header
+
+CALL METHOD lo_rest_client->if_rest_client~set_request_header
+       EXPORTING
+         iv_name  = 'Accept'
+         iv_value = 'application/json'. "Set your header
+
+
+* HTTP GET
+     "lo_rest_client->if_rest_resource~post( lo_request ).
+     lo_rest_client->if_rest_client~get( ).
+
+* HTTP response
+     lo_response = lo_rest_client->if_rest_client~get_response_entity( ).
+     http_status = lv_status = lo_response->get_header_field( '~status_code' ).
+     lv_str = lo_response->get_string_data( ).
+     WRITE : lv_str,http_status.
+
+
+
+ENDIF.
