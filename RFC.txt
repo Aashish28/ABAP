@@ -104,6 +104,12 @@ DATA: lo_http_client     TYPE REF TO if_http_client,
 
      CONCATENATE lv_1 lv_2 lv_3 lv_4 lv_5 INTO lv_mo.
 
+
+CALL METHOD lo_rest_client->if_rest_client~set_request_header
+       EXPORTING
+         iv_name  = 'Accept'
+         iv_value = 'application/json'. "Set your header
+
       lo_request = lo_rest_client->if_rest_client~create_request_entity( ).
      lo_request->set_content_type( iv_media_type = if_rest_media_type=>gc_appl_xml ).
      lo_request->set_string_data( lv_mo ).
@@ -117,6 +123,10 @@ DATA: lo_http_client     TYPE REF TO if_http_client,
      logontoken = lo_response->get_header_field( 'logonToken' ).
      content_type = lo_response->get_header_field( 'content-type' ).
      response = lo_response->get_string_data( ).
+
+
+
+
 
      data(lv_token) = response+301(250).
 
@@ -205,6 +215,35 @@ CALL METHOD lo_rest_client->if_rest_client~set_request_header
      http_status = lv_status = lo_response->get_header_field( '~status_code' ).
      lv_str = lo_response->get_string_data( ).
      WRITE : lv_str,http_status.
+
+TYPES: begin of  ty_json,
+       last type string,
+       entries TYPE STANDARD TABLE OF /SIE/PD_DS_BO_BOOKMARKS WITH DEFAULT KEY ,
+      END OF ty_json.
+DATA : lt TYPE ty_json.
+
+DATA : lt_mapping  TYPE /ui2/cl_json=>name_mappings,
+ lv_json     TYPE /ui2/cl_json=>json.
+
+lv_json = lv_str.
+
+lt_mapping = VALUE #( ( abap = 'ID' json = 'id' )
+                      ( abap = 'CUID' json = 'cuid' )
+                      ( abap = 'TYPE' json = 'type' )
+                      ( abap = 'NAME' json = 'name' )
+                      ( abap = 'DESCRIPTION' json = 'description' ) ).
+
+data lo_data   TYPE REF TO data.
+FIELD-SYMBOLS <data> TYPE ANY.
+
+CREATE DATA lo_data TYPE ('/SIE/PD_DS_BO_BOOKMARKS').
+    ASSIGN lo_data->* TO <data>.
+
+/ui2/cl_json=>deserialize( EXPORTING json = lv_json pretty_name = /ui2/cl_json=>pretty_mode-camel_case
+  name_mappings = lt_mapping
+  CHANGING data = lt ).
+     BREAK-POINT.
+
 
 
 
